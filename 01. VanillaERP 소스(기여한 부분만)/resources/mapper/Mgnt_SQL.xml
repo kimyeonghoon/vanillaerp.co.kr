@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mgnt">
+	<!-- 
+		창고관리 리스트 AJAX : getWrhsCnt(전체 창고 개수 세기), getWrhsList(창고의 리스트 조회)  
+	 -->
+	<select id="getWrhsCnt" parameterType="hashmap" resultType="integer">
+		SELECT COUNT(*)
+		FROM WAREHOUSE
+        WHERE 1 = 1
+        <if test="userDprtmntNo != 5">
+			AND DPRTMNT_NO = #{userDprtmntNo}
+		</if>
+		<if test="selectView == 'excludeView'">
+			AND DSPSL_DATE IS NULL
+		</if>
+		<if test="searchTxt != null and searchTxt != ''">
+			<choose>
+				<when test="searchGbn == 1">
+					AND WRHS_NO LIKE '%' || #{searchTxt} || '%'
+				</when>
+				<when test="searchGbn == 2">
+					AND WRHS_NAME LIKE '%' || #{searchTxt} || '%'
+				</when>
+			</choose>
+		</if>
+	</select>
+	
+	<select id="getWrhsList" parameterType="hashmap" resultType="hashmap">
+		SELECT WRHS_NO, WRHS_NAME, WRHS_LCTN, CNTRCT_DATE, RGSTRTN_DATE, SCHDL_END_DATE, CNTRCT_DATE, CNTRCT_TYPE, DPRTMNT_NAME, EMPLY_NAME, RMRK, DSPSL_DATE
+		FROM (SELECT WRHS_NO, NVL(TO_CHAR(DSPSL_DATE, 'YYYY-MM-DD'), '-') AS DSPSL_DATE, WRHS_NAME, WRHS_LCTN, TO_CHAR(CNTRCT_DATE, 'YYYY-MM-DD') AS CNTRCT_DATE, TO_CHAR(RGSTRTN_DATE, 'YYYY-MM-DD') AS RGSTRTN_DATE, NVL(TO_CHAR(SCHDL_END_DATE, 'YYYY-MM-DD'), '-') AS SCHDL_END_DATE, CNTRCT_TYPE, DPRTMNT_NAME, E.EMPLY_NAME, NVL(RMRK, '-') AS RMRK, ROW_NUMBER() OVER(ORDER BY WRHS_NO DESC) AS RNUM, DPRTMNT_NO
+		      FROM (SELECT WRHS_NO, WRHS_NAME, D.DPRTMNT_NO, WRHS_LCTN, CNTRCT_DATE, RGSTRTN_DATE, SCHDL_END_DATE, CNTRCT_TYPE, DPRTMNT_NAME, RMRK, EMPLY_NO, DSPSL_DATE
+		            FROM WAREHOUSE W INNER JOIN DPRTMNT D
+		                                     ON W.DPRTMNT_NO = D.DPRTMNT_NO) WD INNER JOIN EMPLY E
+		                                                                                ON WD.EMPLY_NO = E.EMPLY_NO
+		WHERE 1 = 1
+		<if test="userDprtmntNo != 5">
+			AND DPRTMNT_NO = #{userDprtmntNo}
+		</if>
+		<if test="selectView == 'excludeView'">
+			AND DSPSL_DATE IS NULL
+		</if>
+		<if test="searchTxt != null and searchTxt != ''">
+			<choose>
+				<when test="searchGbn == 1">
+					AND WRHS_NO LIKE '%' || #{searchTxt} || '%'
+				</when>
+				<when test="searchGbn == 2">
+					AND WRHS_NAME LIKE '%' || #{searchTxt} || '%'
+				</when>
+			</choose>
+		</if>
+		) S
+		WHERE S.RNUM BETWEEN #{startCnt} AND #{endCnt}
+	</select>
+	
+	
+	<!-- 
+		창고관리 추가 AJAX : addWrhs(창고 추가)  
+	 -->
+	<insert id="addWrhs" parameterType="hashmap">
+		INSERT INTO WAREHOUSE(WRHS_NO, DPRTMNT_NO, EMPLY_NO, WRHS_NAME, WRHS_LCTN, RMRK, CNTRCT_TYPE, CNTRCT_DATE, SCHDL_END_DATE)
+		VALUES(WAREHOUSE_SEQ.NEXTVAL, #{dpartmntNo}, #{emplyNo}, #{wrhsName}, #{wrhsLctn}, #{rmrk}, #{cntrctType}, TO_DATE(#{cntrctDate}, 'YYYY-MM-DD HH24:MI:SS'), TO_DATE(#{endSchdDate}, 'YYYY-MM-DD HH24:MI:SS'))
+	</insert>
+	
+	
+	<!-- 
+		창고관리 수정 AJAX : updateWrhs(창고 수정)  
+	 -->
+	<update id="updateWrhs" parameterType="hashmap">
+		<choose>
+			<when test="endSchdDate != null and endSchdDate != ''">
+				UPDATE WAREHOUSE SET DPRTMNT_NO = #{dpartmntNo}, EMPLY_NO = #{emplyNo}, WRHS_NAME = #{wrhsName}, WRHS_LCTN = #{wrhsLctn}, RMRK = #{rmrk}, CNTRCT_TYPE = #{cntrctType}, CNTRCT_DATE = TO_DATE(#{cntrctDate}, 'YYYY-MM-DD HH24:MI:SS'), SCHDL_END_DATE = TO_DATE(#{endSchdDate}, 'YYYY-MM-DD HH24:MI:SS')
+			</when>
+			<otherwise>
+				UPDATE WAREHOUSE SET DPRTMNT_NO = #{dpartmntNo}, EMPLY_NO = #{emplyNo}, WRHS_NAME = #{wrhsName}, WRHS_LCTN = #{wrhsLctn}, RMRK = #{rmrk}, CNTRCT_TYPE = #{cntrctType}, CNTRCT_DATE = TO_DATE(#{cntrctDate}, 'YYYY-MM-DD HH24:MI:SS'), SCHDL_END_DATE = null
+			</otherwise>
+		</choose>
+		WHERE WRHS_NO = #{listRadio}
+	</update>
+	 
+	 
+	<!-- 
+		창고관리 폐기 AJAX : delWrhs(창고 폐기)  
+	 -->
+	<update id="delWrhs" parameterType="hashmap">
+		UPDATE WAREHOUSE SET DSPSL_DATE = SYSDATE
+		WHERE WRHS_NO = #{listRadio}
+	</update>
+	
+	
+	<!-- 
+		창고관리 항목 선택 확인 AJAX : selWrhsCheck(선택한 창고가 존재하는지 확인), endWrhsCheck(이미 폐기된 창고인지 확인), getWrhs(선택한 창고의 정보 가져오기)
+	 -->
+	<select id="selWrhsCheck" parameterType="hashmap" resultType="Integer">
+		SELECT COUNT(*) 
+		FROM WAREHOUSE
+		WHERE WRHS_NO = #{listRadio}
+	</select>
+	
+	<select id="endWrhsCheck" parameterType="hashmap" resultType="Integer">
+		SELECT COUNT(DSPSL_DATE)
+		FROM WAREHOUSE
+		WHERE WRHS_NO = #{listRadio}
+	</select>
+	
+	<select id="getWrhs" parameterType="hashmap" resultType="hashmap">
+		SELECT WRHS_NO, WRHS_NAME, WRHS_LCTN, CNTRCT_DATE, RGSTRTN_DATE, SCHDL_END_DATE, CNTRCT_DATE, CNTRCT_TYPE, DPRTMNT_NAME, EMPLY_NAME, RMRK, DPRTMNT_NO, EMPLY_NO 
+						FROM (SELECT WRHS_NO, WRHS_NAME, WRHS_LCTN, TO_CHAR(CNTRCT_DATE, 'YYYY-MM-DD') AS CNTRCT_DATE, TO_CHAR(RGSTRTN_DATE, 'YYYY-MM-DD') AS RGSTRTN_DATE, TO_CHAR(SCHDL_END_DATE, 'YYYY-MM-DD') AS SCHDL_END_DATE, CNTRCT_TYPE, DPRTMNT_NAME, DPRTMNT_NO, E.EMPLY_NO, E.EMPLY_NAME, RMRK, ROW_NUMBER() OVER(ORDER BY WRHS_NO DESC) AS RNUM
+						      FROM (SELECT WRHS_NO, WRHS_NAME, WRHS_LCTN, CNTRCT_DATE, RGSTRTN_DATE, SCHDL_END_DATE, CNTRCT_TYPE, DPRTMNT_NAME, RMRK, W.EMPLY_NO, D.DPRTMNT_NO
+						            FROM WAREHOUSE W INNER JOIN DPRTMNT D
+						                                     ON W.DPRTMNT_NO = D.DPRTMNT_NO) WD INNER JOIN EMPLY E
+						                                                                                    ON WD.EMPLY_NO = E.EMPLY_NO)
+		WHERE WRHS_NO = #{listRadio}
+	</select>
+	
+	
+	<!-- 
+		비품관리 리스트 AJAX : getEqCnt(비품의 개수를 셈), getEqList(비품 리스트 조회)
+	 -->
+	<select id="getEqCnt" parameterType="hashmap" resultType="integer">
+		SELECT COUNT(*)
+		FROM EQPMNT E INNER JOIN DPRTMNT D
+						 ON E.DPRTMNT_NO = D.DPRTMNT_NO
+		WHERE 1 = 1
+		<if test="userDprtmntNo != 5">
+			AND D.DPRTMNT_NO = #{userDprtmntNo}
+		</if>
+		<if test="selectView == 'excludeView'">
+			AND DSCRD_DATE IS NULL
+		</if>
+		<if test="searchTxt != null and searchTxt != ''">
+			<choose>
+				<when test="searchGbn == 1">
+					AND EQPMNT_NAME LIKE '%' || #{searchTxt} || '%'
+				</when>
+				<when test="searchGbn == 2">
+					AND DPRTMNT_NAME LIKE '%' || #{searchTxt} || '%'
+				</when>
+			</choose>
+		</if>
+	</select>
+	
+	<select id="getEqList" parameterType="hashmap" resultType="hashmap">
+		SELECT EQPMNT_NO, EQPMNT_TYPE_NAME, EQPMNT_NAME, DPRTMNT_NAME, PRCHS_STORE, TO_CHAR(PRCHS_PRICE, '999,999,999') AS PRCHS_PRICE, PRCHS_DATE, NVL(MEMO,'-') AS MEMO, RGSTRTN_DATE, NVL(DSCRD_DATE,'-') AS DSCRD_DATE, NVL(EMPLY_NAME,'-') AS EMPLY_NAME
+		FROM(SELECT EQPMNT_NO, EQPMNT_TYPE_NAME, DPRTMNT_NO, EQPMNT_NAME, DPRTMNT_NAME, PRCHS_STORE, PRCHS_PRICE, PRCHS_DATE, MEMO, RGSTRTN_DATE, DSCRD_DATE, EM.EMPLY_NAME, ROW_NUMBER() OVER(ORDER BY EQPMNT_NO DESC) AS RNUM
+		     FROM(SELECT E.EQPMNT_NO, EQ.EQPMNT_TYPE_NAME, E.EQPMNT_NAME, D.DPRTMNT_NAME, E.PRCHS_STORE, E.PRCHS_PRICE, D.DPRTMNT_NO, TO_CHAR(E.PRCHS_DATE, 'YYYY-MM-DD') AS PRCHS_DATE, E.MEMO, TO_CHAR(E.RGSTRTN_DATE, 'YYYY-MM-DD') as RGSTRTN_DATE, TO_CHAR(E.DSCRD_DATE, 'YYYY-MM-DD') AS DSCRD_DATE, E.EMPLY_NO
+		          FROM EQPMNT E INNER JOIN DPRTMNT D
+		                                ON E.DPRTMNT_NO = D.DPRTMNT_NO 
+		                        INNER JOIN EQPMNT_TYPE EQ
+		                                ON E.EQPMNT_TYPE_NO = EQ.EQPMNT_TYPE_NO) EDQ LEFT OUTER JOIN EMPLY EM
+		                                                                                          ON EDQ.EMPLY_NO = EM.EMPLY_NO
+			WHERE 1 = 1
+			<if test="userDprtmntNo != 5">
+			 	AND DPRTMNT_NO = #{userDprtmntNo}
+			</if>
+			<if test="selectView == 'excludeView'">
+				AND DSCRD_DATE IS NULL
+			</if>
+			<if test="searchTxt != null and searchTxt != ''">
+				<choose>
+					<when test="searchGbn == 0">
+						AND EQPMNT_NO LIKE '%' || #{searchTxt} || '%'
+					</when>
+					<when test="searchGbn == 1">
+						AND EQPMNT_NAME LIKE '%' || #{searchTxt} || '%'
+					</when>
+					<when test="searchGbn == 2">
+						AND DPRTMNT_NAME LIKE '%' || #{searchTxt} || '%'
+					</when>
+				</choose>
+			</if>
+			) S
+		WHERE S.RNUM BETWEEN #{startCnt} AND #{endCnt}
+	</select>
+	
+	
+	<!-- 
+		비품관리 비품 추가 AJAX : addEq(비품추가)
+	 -->
+	<insert id="addEq" parameterType="hashmap">
+		INSERT INTO EQPMNT(EQPMNT_NO, EQPMNT_TYPE_NO, EQPMNT_NAME, DPRTMNT_NO, EMPLY_NO, PRCHS_STORE, PRCHS_PRICE, PRCHS_DATE, MEMO, RGSTRTN_DATE)
+		VALUES(EQPMNT_SEQ.NEXTVAL, #{eqmntType}, #{eqmntName}, #{dpartmntNo}, #{emplyNo}, #{prchsStore}, #{prchsPrice}, TO_DATE(#{prchsDate}, 'YYYY-MM-DD HH24:MI:SS'), #{memo}, SYSDATE)
+	</insert>
+	
+	
+	<!-- 
+		비품관리 수정 AJAX : updateEq(비품수정)
+	 -->
+	<update id="updateEq" parameterType="hashmap">
+		UPDATE EQPMNT SET EQPMNT_TYPE_NO = #{eqmntType}, EQPMNT_NAME = #{eqmntName}, PRCHS_PRICE = #{prchsPrice}, DPRTMNT_NO = #{dpartmntNo}, PRCHS_STORE = #{prchsStore}, PRCHS_DATE = TO_DATE(#{prchsDate}, 'YYYY-MM-DD HH24:MI:SS'), MEMO = #{memo}
+		WHERE EQPMNT_NO = #{listRadio}
+	</update> 
+
+
+	<!-- 
+		비품 폐기 AJAX : delEq(비품폐기)
+	 -->
+	<update id="delEq" parameterType="hashmap">
+		UPDATE EQPMNT SET DSCRD_DATE = SYSDATE
+		WHERE EQPMNT_NO = #{listRadio}
+	</update>
+	
+	
+	<!-- 
+		비품관리 항목 선택 확인 AJAX : selEqCheck(선택한 비품이 존재하는지 확인), rscrdCheck(이미 폐기한 비품인지 확인), getEq(선택한 비품의 정보 가져오기)
+	 -->
+	<select id="selEqCheck" parameterType="hashmap" resultType="Integer">
+		SELECT COUNT(*) 
+		FROM EQPMNT
+		WHERE EQPMNT_NO = #{listRadio}
+	</select>
+	
+	<select id="rscrdCheck" parameterType="hashmap" resultType="Integer">
+		SELECT COUNT(DSCRD_DATE)
+		FROM EQPMNT
+		WHERE EQPMNT_NO = #{listRadio}
+	</select>
+	
+	<select id="getEq" parameterType="hashmap" resultType="hashmap">
+		SELECT EQPMNT_NO, EQPMNT_TYPE_NO, EQPMNT_NAME, DPRTMNT_NO, DPRTMNT_NAME,PRCHS_STORE, PRCHS_PRICE AS PRCHS_PRICE, PRCHS_DATE, MEMO, RGSTRTN_DATE, DSCRD_DATE, EMPLY_NO
+		FROM(SELECT EQPMNT_NO, EQPMNT_TYPE_NO, EQPMNT_NAME, DPRTMNT_NO, DPRTMNT_NAME, PRCHS_STORE, PRCHS_PRICE, PRCHS_DATE, MEMO, RGSTRTN_DATE, DSCRD_DATE, EM.EMPLY_NO, ROW_NUMBER() OVER(ORDER BY EQPMNT_NO DESC) AS RNUM
+		     FROM(SELECT E.EQPMNT_NO, EQ.EQPMNT_TYPE_NO, E.EQPMNT_NAME, D.DPRTMNT_NO, D.DPRTMNT_NAME, E.PRCHS_STORE, E.PRCHS_PRICE, TO_CHAR(E.PRCHS_DATE, 'YYYY-MM-DD') AS PRCHS_DATE, E.MEMO, TO_CHAR(E.RGSTRTN_DATE, 'YYYY-MM-DD') as RGSTRTN_DATE, TO_CHAR(E.DSCRD_DATE, 'YYYY-MM-DD') AS DSCRD_DATE, E.EMPLY_NO
+		          FROM EQPMNT E INNER JOIN DPRTMNT D
+		                                ON E.DPRTMNT_NO = D.DPRTMNT_NO 
+		                        INNER JOIN EQPMNT_TYPE EQ
+		                                ON E.EQPMNT_TYPE_NO = EQ.EQPMNT_TYPE_NO) EDQ LEFT OUTER JOIN EMPLY EM
+		                                                                                          ON EDQ.EMPLY_NO = EM.EMPLY_NO
+			 )
+		WHERE EQPMNT_NO = #{listRadio}
+	</select>
+
+
+	<!-- 
+		[창고관리/비품관리] 팝업에서 셀렉트 박스 부분 디비에서 조회 : getDprtList(부서정보 조회), getEqTypeList(비품유형 조회), getEmplyList(사원정보 조회)
+	 -->
+	<select id="getDprtList" parameterType="hashmap" resultType="hashmap">
+		SELECT DPRTMNT_NO, DPRTMNT_NAME
+		FROM DPRTMNT
+		WHERE YN = 1
+	</select>
+	
+	<select id="getEqTypeList" parameterType="hashmap" resultType="hashmap">
+		SELECT EQPMNT_TYPE_NO, EQPMNT_TYPE_NAME
+		FROM EQPMNT_TYPE
+		WHERE DLT_TYPE = 1
+	</select>
+	
+	<select id="getEmplyList" parameterType="hashmap" resultType="hashmap">
+		SELECT E.EMPLY_NO, D.DPRTMNT_NO, D.DPRTMNT_NAME, E.EMPLY_NAME
+		FROM EMPLY E INNER JOIN PRSNL_APNTMNTS P
+		                     ON E.EMPLY_NO = P.EMPLY_NO
+		             INNER JOIN DPRTMNT D
+		                     ON P.DPRTMNT_NO = D.DPRTMNT_NO
+		WHERE 1 = 1
+		<if test="dpartmntNo != null and searchTxt != ''">
+			AND D.DPRTMNT_NO = #{dpartmntNo}
+		</if>
+	</select>
+	
+</mapper>

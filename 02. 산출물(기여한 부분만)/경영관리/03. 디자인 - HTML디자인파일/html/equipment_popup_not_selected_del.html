@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>비품관리</title>
+<!-- Favicon -->
+<link rel="shortcut icon" href="favicon/favicon.ico">
+<!-- 메인 CSS -->
+<link rel="stylesheet" type="text/css" href="css/main.css" />
+<!-- 레이아웃 CSS -->
+<link rel="stylesheet" type="text/css" href="css/layout.css" />
+<!-- 메뉴 CSS -->
+<link rel="stylesheet" type="text/css" href="css/menu.css" />
+<!-- 팝업 CSS -->
+<link rel="stylesheet" type="text/css" href="css/popup.css" />
+<!-- 게시판 CSS -->
+<link rel="stylesheet" type="text/css" href="css/board.css" />
+
+<!-- jQuery JS -->
+<script type="text/javascript" src="js/jquery-1.12.4.js"></script>
+<!-- slimscroll JS -->
+<script type="text/javascript" src="js/jquery.slimscroll.js"></script>
+<!-- Main JS -->
+<script type="text/javascript" src="js/main.js"></script>
+<!-- Main JS -->
+<script type="text/javascript" src="js/popup.js"></script>
+
+<style type="text/css">
+ .popup2 {
+	background-color:white;
+	width: 450px;
+	height: 180px;
+	position:absolute;
+	top: calc(50% - 200px);
+	left: calc(50% - 100px);
+	box-shadow: 1px 0px 4px 0px rgba(0, 0, 0, 0.8);
+	z-index: 100;
+} 
+
+.modifyBtn {
+	vertical-align: top;
+	height:29px;
+	width:75px;
+	background-image: url("./images/modifyicon.png");
+	background-repeat: no-repeat;
+	background-size: 16px 16px;
+	background-position: 10% 50%;
+	border: 1px solid lightgray;
+ 	text-indent: 15px;
+ 	margin-bottom:10px;
+/*  	background: linear-gradient(#efefef, #dbdada);*/
+ 	color:#515151;
+ 	outline-color: #d5e4f1;
+	float: right;
+	cursor: pointer;
+}
+
+.deleteBtn {
+	vertical-align: top;
+	height:29px;
+	width:75px;
+	background-image: url("./images/deleteicon.png");
+	background-repeat: no-repeat;
+	background-size: 16px 16px;
+	background-position: 10% 50%;
+	border: 1px solid lightgray;
+ 	text-indent: 15px;
+ 	margin-bottom:10px;
+/*  	background: linear-gradient(#efefef, #dbdada);*/
+ 	color:#515151;
+ 	outline-color: #d5e4f1;
+	float: right;
+	cursor: pointer;
+}
+
+#con_con > div {
+	font-weight: bold;
+	padding-bottom: 10px;
+}
+
+/* Board 커스텀 */
+.board td:nth-child(1) {
+	color: #8e8e8e;
+	font-size: 9pt;
+}
+
+.board td:nth-child(2) {
+	text-align:left;
+}
+
+.board td:nth-child(2):hover {
+	text-decoration: underline;
+}
+
+.board td:nth-child(3) {
+}
+
+.board td:nth-child(4) {
+}
+
+.board td:nth-child(5) {
+}
+
+.conList > span {
+	border: 1px;
+	padding: 0px;
+}
+
+.necessaryInput {
+	color: red;
+}
+
+.formCon, .selBox {
+	padding: 0px;
+	border: 1px solid;
+	height: 25px;
+}
+
+.formCon {
+	width: calc(100% - 2px);
+	height: 25px	
+}
+
+.selBox {
+	width: 100%;
+	height: 27px;
+}
+
+.conList {
+	width: 100%;
+}
+
+.con_con > .item {
+	font-weight: bold;
+}
+
+.con_con > .noti_del {
+	color: blue;
+}
+</style>
+<script type="text/javascript">
+$(document).ready(function() {
+	/* makeAlert(1, "Information", "정보내용!!!", null);
+	makeOneBtnPopup(2, "팝업제목", "이거슨내용임", true, 400, 500, null, "확인용", function() {
+		closePopup(2);
+	});
+	makeTwoBtnPopup(3, "팝업제목2", "이거슨내용임22", true, 400, 500, null, "바꾸기", function() {
+		popupBtnChange(4, 1, "바꿔!", function() {
+			popupContentsChange(4, "내용도바꿔~", null);
+		});
+	}, "확인용", function() {
+		closePopup(3);
+	}); */
+});
+</script>
+</head>
+<body>
+<!-- 팝업 -->
+<div class="popup_wrap">
+	<div class="popup_bg"></div>
+		<div class="popup2">
+			<div class="con">
+				<div class="con_title"><div class="con_title_txt">알림</div></div>
+				<div class="con_con">
+					폐기할 비품을 선택해주세요.
+				</div>
+			<div class="bottom_bar">
+				<div class="popup_btn"><div class="popup_btn_txt">확인</div></div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="top_area">
+	<div class="logo_wrap">
+		<div class="logo_table">
+			<div class="logo">anilla ERP</div>
+		</div>
+	</div>
+	<div class="gnb_wrap">
+		<div class="gnb_table">
+			<div class="gnb">Home > 경영관리 > 비품관리</div>
+		</div>
+	</div>
+	<div class="info_wrap">
+		<div class="info_table">
+			<div class="info"><img class="user_photo" alt="사진" src="images/no_image.png" /><div class="info_txt">홍길동(경영관리부 대리)</div></div>
+		</div>
+	</div>
+	<div class="opt_btn_wrap">
+		<div class="opt_btn_table">
+			<div class="opt_btn">
+				<img class="config_btn" alt="설정" src="images/config.png" />
+				<img class="logoff_btn" alt="로그오프" src="images/logoff.png" />
+			</div>
+		</div>
+	</div>
+</div>
+<div class="middle_wrap">
+	<div class="left_area">
+		<div class="menu1_wrap">
+			<div class="menu1_on">
+				<div class="menu1_txt_bg"></div>
+				<div class="menu1_txt_wrap">
+					<div class="menu1_txt_table">
+						<div class="menu1_txt">경영지원</div>
+					</div>
+				</div>
+				<div class="menu2_wrap">
+					<div class="menu2">
+						<div class="menu2_txt_bg"></div>
+						<div class="menu2_txt_wrap">
+							<div class="menu2_txt_table">
+								<div class="menu2_txt">비품관리</div>
+							</div>
+						</div>
+					</div>
+					<div class="menu2">
+						<div class="menu2_txt_bg"></div>
+						<div class="menu2_txt_wrap">
+							<div class="menu2_txt_table">
+								<div class="menu2_txt">창고관리</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>	
+		</div>
+	</div>
+	<div class="right_area">
+		<div class="title_wrap">
+			<div class="title_table">
+				<div class="title_txt">비품관리</div>
+			</div>
+		</div>
+		<div class="contents_area">
+			<!-- 내용은 여기에 구현하세요. -->
+			<div class="tbl1">
+			<select class="select">
+				<option>분류 선택</option>
+				<option>비품명</option>
+				<option>관리부서</option>
+			</select> 
+			<input type="text" class="search"><input type="button" class="searchBtn">
+			<input type="button" value="폐기" class="deleteBtn">
+			<input type="button" value="수정" class="modifyBtn">
+			<input type="button" value="등록" class="writeBtn">
+				<table class="board">
+					<colgroup>
+						<col width="2%" />
+						<col width="15%" />
+						<col width="6%" />
+						<col width="10%" />
+						<col width="15%" />
+						<col width="10%" />
+						<col width="10%" />
+						<col width="*" />
+						<col width="10%" />
+						<col width="10%" />
+					</colgroup>
+					<thead>
+						<tr>
+							<th></th>
+							<th>비품명</th>
+							<th>유형</th>
+							<th>관리부서</th>
+							<th>구입처</th>
+							<th>구매가격</th>
+							<th>구매일</th>
+							<th>메모</th>
+							<th>등록일</th>
+							<th>폐기일</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td><input type="radio" name="check_content" /></td>
+							<td>전기포트</td>
+							<td>비품</td>
+							<td>경영지원</td>
+							<td>하이마트</td>
+							<td>100,000원</td>
+							<td>2020-02-23</td>
+							<td>카페테리아 비치</td>
+							<td>2020-02-25</td>
+							<td>2020-11-12</td>
+						</tr>
+						<tr>
+							<td><input type="radio" name="check_content" /></td>
+							<td>맥심 모카골드 커피믹스 280TX4개(1박스)</td>
+							<td>소모품</td>
+							<td>영업</td>
+							<td>하이마트</td>
+							<td>128,000원</td>
+							<td>2020-05-27</td>
+							<td>카페테리아 비치</td>
+							<td>2020-02-25</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td><input type="radio" name="check_content" /></td>
+							<td>전기포트</td>
+							<td>비품</td>
+							<td>경영지원</td>
+							<td>하이마트</td>
+							<td>100,000원</td>
+							<td>2020-02-23</td>
+							<td>카페테리아 비치</td>
+							<td>2020-02-25</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td><input type="radio" name="check_content" /></td>
+							<td>전기포트</td>
+							<td>비품</td>
+							<td>경영지원</td>
+							<td>하이마트</td>
+							<td>100,000원</td>
+							<td>2020-02-23</td>
+							<td>카페테리아 비치</td>
+							<td>2020-02-25</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td><input type="radio" name="check_content" /></td>
+							<td>전기포트</td>
+							<td>비품</td>
+							<td>경영지원</td>
+							<td>하이마트</td>
+							<td>100,000원</td>
+							<td>2020-02-23</td>
+							<td>카페테리아 비치</td>
+							<td>2020-02-25</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td><input type="radio" name="check_content" /></td>
+							<td>전기포트</td>
+							<td>비품</td>
+							<td>경영지원</td>
+							<td>하이마트</td>
+							<td>100,000원</td>
+							<td>2020-02-23</td>
+							<td>카페테리아 비치</td>
+							<td>2020-02-25</td>
+							<td></td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="paging">
+					<div class="pagingD" id="first"></div>
+					<div class="pagingD" id="before"></div>
+					<div class="pagingD"><b>1</b></div>
+					<div class="pagingD">2</div>
+					<div class="pagingD">3</div>
+					<div class="pagingD">4</div>
+					<div class="pagingD">5</div>
+					<div class="pagingD" id="next"></div>
+					<div class="pagingD" id="last"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>
